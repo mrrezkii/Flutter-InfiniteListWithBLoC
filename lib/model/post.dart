@@ -13,7 +13,7 @@ class Post {
   static Future<List<Post>> connectToAPI(int start, int limit) async {
     String apiURL = "https://jsonplaceholder.typicode.com/posts?_start=" +
         start.toString() +
-        "&_limit" +
+        "&_limit=" +
         limit.toString();
 
     var apiResult = await http.get(apiURL);
