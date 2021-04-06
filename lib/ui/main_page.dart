@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_list_demo/bloc/post_bloc.dart';
+import 'package:infinite_list_demo/ui/post_item.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -8,14 +9,28 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  ScrollController controller = ScrollController();
+  PostBloc bloc;
+
+  void onScroll() {
+    double maxScroll = controller.position.maxScrollExtent;
+    double currentScroll = controller.position.pixels;
+
+    if (currentScroll == maxScroll) {
+      bloc.add(PostEvent());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    bloc = BlocProvider.of<PostBloc>(context);
+    controller.addListener(onScroll);
     return Scaffold(
       appBar: AppBar(
         title: Text("Infinite List with BLoC"),
       ),
       body: Container(
-        margin: EdgeInsets.all(20),
+        margin: EdgeInsets.only(left: 20, right: 20),
         child: BlocBuilder<PostBloc, PostState>(
           builder: (context, state) {
             if (state is PostUninitialized) {
@@ -29,9 +44,20 @@ class _MainPageState extends State<MainPage> {
             } else {
               PostLoaded loaded = state as PostLoaded;
               return ListView.builder(
-                  itemCount: loaded.posts.length,
-                  itemBuilder: (context, index) =>
-                      Text(loaded.posts[index].title));
+                  controller: controller,
+                  itemCount: (loaded.hasReachedMax)
+                      ? loaded.posts.length
+                      : loaded.posts.length + 1,
+                  itemBuilder: (context, index) => (index < loaded.posts.length)
+                      ? PostItem(loaded.posts[index])
+                      : (Container(
+                          child: Center(
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: CircularProgressIndicator(),
+                          ),
+                        ))));
             }
           },
         ),
